@@ -8,6 +8,17 @@ $(document).ready(function() {
         ['CM201', 'CM202', 'CI166', 'CI164', 'SA214', 'CI220', 'TG I', 'TG II'],
     ];
 
+    const disciplinasOptativas = [
+        'CI069', 'CI084', 'CI085', 'CI086', 'CI087', 'CI088', 'CI089', 'CI090', 'CI091', 'CI092',
+        'CI093', 'CI094', 'CI095', 'CI097', 'CI167', 'CI168', 'CI169', 'CI170', 'CI171', 'CI172',
+        'CI173', 'CI174', 'CI204', 'CI205', 'CI214', 'CI301', 'CI302', 'CI303', 'CI304', 'CI305',
+        'CI306', 'CI309', 'CI310', 'CI311', 'CI312', 'CI313', 'CI314', 'CI315', 'CI316', 'CI317',
+        'CI318', 'CI320', 'CI321', 'CI337', 'CI338', 'CI339', 'CI340', 'CI350', 'CI351', 'CI355',
+        'CI358', 'CI359', 'CI360', 'CI361', 'CI362', 'CI363', 'CI364', 'CI365', 'CI366', 'CI367',
+        'CI394', 'CI395', 'CI396', 'ET082', 'CE211', 'CM043', 'HL077', 'SA017', 'SC003', 'SC202',
+        'SC203'
+    ];
+
     $('#buscar').on('click', function() {
         var ra = $('#ra').val();
         if (ra) {
@@ -22,7 +33,7 @@ $(document).ready(function() {
                 callback(this.responseXML);
             }
         };
-        xmlhttp.open("GET", "/pwa21/visualizeitor/alunos.xml", true);
+        xmlhttp.open("GET", "http://localhost:8000/alunos.xml", true);
         xmlhttp.send();
     }
 
@@ -30,11 +41,11 @@ $(document).ready(function() {
         loadData(function(xmlDoc) {
             var alunos = xmlDoc.getElementsByTagName("ALUNO");
             alunoData = [];
-
+    
             for (var i = 0; i < alunos.length; i++) {
                 var aluno = alunos[i];
                 var matricula = aluno.getElementsByTagName("MATR_ALUNO")[0].childNodes[0].nodeValue;
-
+    
                 if (matricula === ra) {
                     var alunoInfo = {
                         COD_ATIV_CURRIC: aluno.getElementsByTagName("COD_ATIV_CURRIC")[0].childNodes[0].nodeValue,
@@ -46,16 +57,12 @@ $(document).ready(function() {
                         PERIODO: aluno.getElementsByTagName("PERIODO")[0].childNodes[0].nodeValue,
                         SIGLA: aluno.getElementsByTagName("SIGLA")[0].childNodes[0].nodeValue
                     };
-
-
-                    
-                    // alunoData.push(alunoInfo);
+    
                     var index = alunoData.findIndex(item => item.COD_ATIV_CURRIC === alunoInfo.COD_ATIV_CURRIC);
                     if(alunoInfo.COD_ATIV_CURRIC === "CM005")
-                        console.log(alunoInfo, alunoInfo.ANO)
-
+                        console.log(alunoInfo, alunoInfo.ANO);
+    
                     if (index !== -1) {
-                        // Se o ano do novo item for maior, substitui o existente
                         if (parseInt(alunoInfo.ANO) > parseInt(alunoData[index].ANO)) {
                             alunoData[index] = alunoInfo;
                         } else if (parseInt(alunoInfo.ANO) === parseInt(alunoData[index].ANO)){
@@ -64,16 +71,17 @@ $(document).ready(function() {
                             }
                         }
                     } else {
-                        // Adicionar se não encontrado
                         alunoData.push(alunoInfo);
                     }
                 }
             }
-
-
+    
             if (alunoData.length > 0) {
                 var grade = gerarGrade(alunoData);
                 $('#grade-curricular').html(grade);
+                
+                var optativas = gerarOptativas(alunoData);
+                $('#lista-optativas').html(optativas);
             } else {
                 alert("Aluno não encontrado");
             }
@@ -114,6 +122,37 @@ $(document).ready(function() {
         });
 
         return grade;
+    }
+
+    function gerarOptativas(alunoData) {
+        var optativas = '';
+        disciplinasOptativas.forEach(function(optativa) {
+            var situacao = alunoData.find(d => d.COD_ATIV_CURRIC === optativa)?.SITUACAO.toLowerCase() || 'não cursado';
+            var cor = '';
+            switch (situacao) {
+                case 'aprovado':
+                    cor = 'green';
+                    break;
+                case 'reprovado por nota':
+                case 'reprovado por frequência':
+                    cor = 'red';
+                    break;
+                case 'matrícula':
+                    cor = 'blue';
+                    break;
+                case 'equivalência de disciplina':
+                    cor = 'yellow';
+                    break;
+                default:
+                    cor = 'white';
+                    break;
+            }
+            optativas += '<div class="disciplina" style="background-color:' + cor + '" ' +
+                'data-codigo="' + optativa + '">' + 
+                optativa + '</div>';
+        });
+    
+        return optativas;
     }
 
     $(document).on('click', '.disciplina', function(event) {
