@@ -34,7 +34,7 @@ $(document).ready(function() {
                 callback(this.responseXML);
             }
         };
-        xmlhttp.open("GET", "http://localhost:8000/alunos.xml", true);
+        xmlhttp.open("GET", "alunos.xml", true);
         xmlhttp.send();
     }
 
@@ -129,8 +129,7 @@ $(document).ready(function() {
     }
 
     function gerarOptativas(alunoData) {
-        var optativas = '<h1>Disciplinas Optativas</h1>';
-        console.log("chegaaa")
+        var optativas = '<h2>Disciplinas Optativas</h2>'
         disciplinasOptativas.forEach(function(disciplina) {
             var situacao = alunoData.find(d => d.COD_ATIV_CURRIC === disciplina)?.SITUACAO.toLowerCase() || 'não cursado';
             var cor = '';
