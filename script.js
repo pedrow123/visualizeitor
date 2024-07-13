@@ -1,5 +1,6 @@
 $(document).ready(function() {
     let alunoData = [];
+    let alunoHistorico = {};
     const gradeCurricular = [
         ['CI068', 'CI210', 'CI212', 'CI215', 'CI162', 'CI163', 'CI221', 'OPT'],
         ['CI055', 'CI056', 'CI057', 'CI062', 'CI065', 'CI165', 'CI211', 'OPT'],
@@ -41,6 +42,7 @@ $(document).ready(function() {
         loadData(function(xmlDoc) {
             var alunos = xmlDoc.getElementsByTagName("ALUNO");
             alunoData = [];
+            alunoHistorico = {};
     
             for (var i = 0; i < alunos.length; i++) {
                 var aluno = alunos[i];
@@ -59,9 +61,6 @@ $(document).ready(function() {
                     };
     
                     var index = alunoData.findIndex(item => item.COD_ATIV_CURRIC === alunoInfo.COD_ATIV_CURRIC);
-                    if(alunoInfo.COD_ATIV_CURRIC === "CM005")
-                        console.log(alunoInfo, alunoInfo.ANO);
-    
                     if (index !== -1) {
                         if (parseInt(alunoInfo.ANO) > parseInt(alunoData[index].ANO)) {
                             alunoData[index] = alunoInfo;
@@ -73,6 +72,12 @@ $(document).ready(function() {
                     } else {
                         alunoData.push(alunoInfo);
                     }
+
+                    // Adicionando ao histórico
+                    if (!alunoHistorico[alunoInfo.COD_ATIV_CURRIC]) {
+                        alunoHistorico[alunoInfo.COD_ATIV_CURRIC] = [];
+                    }
+                    alunoHistorico[alunoInfo.COD_ATIV_CURRIC].push(alunoInfo);
                 }
             }
     
@@ -82,6 +87,9 @@ $(document).ready(function() {
                 
                 var optativas = gerarOptativas(alunoData);
                 $('#lista-optativas').html(optativas);
+
+                // Adicionar evento de clique com botão esquerdo e direito às disciplinas
+                adicionarEventosDisciplinas();
             } else {
                 alert("Aluno não encontrado");
             }
@@ -91,100 +99,101 @@ $(document).ready(function() {
     function gerarGrade(alunoData) {
         var grade = '';
         gradeCurricular.forEach(function(semestre, index) {
-            grade += '<div class="semestre">';
+            grade += '<div class="row mb-2">';
             semestre.forEach(function(disciplina) {
                 var situacao = alunoData.find(d => d.COD_ATIV_CURRIC === disciplina)?.SITUACAO.toLowerCase() || 'não cursado';
                 var cor = '';
                 switch (situacao) {
                     case 'aprovado':
-                        cor = 'green';
+                        cor = 'bg-success text-white';
                         break;
                     case 'reprovado por nota':
                     case 'reprovado por frequência':
-                        cor = 'red';
+                        cor = 'bg-danger text-white';
                         break;
                     case 'matrícula':
-                        cor = 'blue';
+                        cor = 'bg-primary text-white';
                         break;
                     case 'equivalência de disciplina':
-                        cor = 'yellow';
+                        cor = 'bg-warning text-black';
                         break;
                     default:
-                        cor = 'white';
+                        cor = 'bg-white text-black';
                         break;
                 }
-
-                grade += '<div class="disciplina" style="background-color:' + cor + '" ' +
-                    'data-codigo="' + disciplina + '">' + 
-                    disciplina + '</div>';
+                grade += `<div class="col disciplina ${cor}" data-codigo="${disciplina}" data-toggle="modal" data-target="#popup">${disciplina}</div>`;
             });
             grade += '</div>';
         });
-
         return grade;
     }
 
     function gerarOptativas(alunoData) {
-        var optativas = '';
-        disciplinasOptativas.forEach(function(optativa) {
-            var situacao = alunoData.find(d => d.COD_ATIV_CURRIC === optativa)?.SITUACAO.toLowerCase() || 'não cursado';
+        var optativas = '<h1>Disciplinas Optativas</h1>';
+        console.log("chegaaa")
+        disciplinasOptativas.forEach(function(disciplina) {
+            var situacao = alunoData.find(d => d.COD_ATIV_CURRIC === disciplina)?.SITUACAO.toLowerCase() || 'não cursado';
             var cor = '';
             switch (situacao) {
                 case 'aprovado':
-                    cor = 'green';
+                    cor = 'bg-success text-white';
                     break;
                 case 'reprovado por nota':
                 case 'reprovado por frequência':
-                    cor = 'red';
-                    break;
-                case 'matrícula':
-                    cor = 'blue';
-                    break;
-                case 'equivalência de disciplina':
-                    cor = 'yellow';
+                    cor = 'bg-danger text-white';
                     break;
                 default:
-                    cor = 'white';
-                    break;
+                    cor = 'bg-white text-black';
             }
-            optativas += '<div class="disciplina" style="background-color:' + cor + '" ' +
-                'data-codigo="' + optativa + '">' + 
-                optativa + '</div>';
+            optativas += `<div class="col disciplina ${cor}" data-codigo="${disciplina}" data-toggle="modal" data-target="#popup">${disciplina}</div>`;
         });
-    
         return optativas;
     }
 
-    $(document).on('click', '.disciplina', function(event) {
-        if (event.which === 1) {
-            // Botão esquerdo
+    function adicionarEventosDisciplinas() {
+        $('.disciplina').on('click', function(event) {
             var codigo = $(this).data('codigo');
-            var disciplina = alunoData.find(d => d.COD_ATIV_CURRIC === codigo);
-            if (disciplina) {
-                var info = 'Código: ' + disciplina.COD_ATIV_CURRIC + '<br>' +
-                    'Nome: ' + disciplina.NOME_ATIV_CURRIC + '<br>' +
-                    'Última vez cursada: ' + disciplina.ANO + ' ' + disciplina.PERIODO + '<br>' +
-                    'Nota: ' + disciplina.MEDIA_FINAL + '<br>' +
-                    'Frequência: ' + disciplina.FREQUENCIA;
+            mostrarUltimaInformacaoDisciplina(codigo);
+        });
 
-                $('#popup-info').html(info);
-                $('#popup').show();
-            }
-        } else if (event.which === 3) {
-            // Botão direito
+        $('.disciplina').on('contextmenu', function(event) {
+            event.preventDefault();
             var codigo = $(this).data('codigo');
-            var historico = alunoData.filter(d => d.COD_ATIV_CURRIC === codigo)
-                .map(d => 'Ano/Semestre: ' + d.ANO + ' ' + d.PERIODO + '<br>' +
-                    'Nota: ' + d.MEDIA_FINAL + '<br>' +
-                    'Frequência: ' + d.FREQUENCIA)
-                .join('<br><br>');
+            mostrarHistoricoDisciplina(codigo);
+            $('#popup').modal('show');
+        });
+    }
 
-            $('#popup-info').html(historico);
-            $('#popup').show();
+    function mostrarUltimaInformacaoDisciplina(codigo) {
+        var ultimaTentativa = alunoData.find(d => d.COD_ATIV_CURRIC === codigo);
+        var info = '';
+        if (ultimaTentativa) {
+            info += `<p><strong>Código/Disciplina:</strong> ${ultimaTentativa.COD_ATIV_CURRIC} / ${ultimaTentativa.NOME_ATIV_CURRIC}</p>`;
+            info += `<p><strong>Última vez cursada:</strong> ${ultimaTentativa.ANO} / ${ultimaTentativa.PERIODO}</p>`;
+            info += `<p><strong>Nota:</strong> ${ultimaTentativa.MEDIA_FINAL}</p>`;
+            info += `<p><strong>Frequência:</strong> ${ultimaTentativa.FREQUENCIA}</p>`;
+        } else {
+            info = '<p>Informações não encontradas.</p>';
         }
-    });
+        $('#popup-info').html(info);
+        $('#popup').modal('show');
+    }
 
-    $('.close').on('click', function() {
-        $('#popup').hide();
-    });
+    function mostrarHistoricoDisciplina(codigo) {
+        var historico = alunoHistorico[codigo];
+        var info = '';
+        if (historico) {
+            historico.forEach(function(entry) {
+                info += `<p><strong>Ano:</strong> ${entry.ANO}</p>`;
+                info += `<p><strong>Período:</strong> ${entry.PERIODO}</p>`;
+                info += `<p><strong>Nota:</strong> ${entry.MEDIA_FINAL}</p>`;
+                info += `<p><strong>Frequência:</strong> ${entry.FREQUENCIA}</p>`;
+                info += `<hr>`;
+            });
+        } else {
+            info = '<p>Histórico não encontrado.</p>';
+        }
+        $('#popup-info').html(info);
+        $('#popup').modal('show');
+    }
 });

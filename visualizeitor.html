@@ -4,30 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizeitor</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Visualizeitor</h1>
-    <input type="text" id="ra" placeholder="Digite o RA do aluno">
-    <button id="buscar">Buscar</button>
-
-    <div id="grade-curricular">
-        <!-- Grade curricular será gerada dinamicamente -->
-    </div>
-    
-    <div id="optativas">
-        <h2>Disciplinas Optativas</h2>
-        <div id="lista-optativas">
-            <!-- Lista de disciplinas optativas será gerada dinamicamente -->
+    <div class="container">
+        <h1 class="text-center my-4">Visualizeitor</h1>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" id="ra" placeholder="Digite o RA do aluno">
+            <div class="input-group-append">
+                <button class="btn btn-primary" id="buscar">Buscar</button>
+            </div>
         </div>
-    </div>
 
-    <div id="popup">
-        <div id="popup-info"></div>
-        <button class="close">Fechar</button>
+        <div id="grade-curricular" class="my-4">
+            <!-- Grade curricular será gerada dinamicamente -->
+        </div>
+
+        <div id="optativas" class="my-4">
+            <!-- <h2>Disciplinas Optativas</h2> -->
+            <div id="lista-optativas" class="flex flex-wrap">
+                <!-- Lista de disciplinas optativas será gerada dinamicamente -->
+            </div>
+        </div>
+
+        <div id="popup" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Informações da Disciplina</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body" id="popup-info">
+                        <!-- Informações da disciplina serão exibidas aqui -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
